@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#20B2AA">
+    <title>Spended - Pencatat Keuangan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="manifest" href="#" id="manifest-placeholder">
+    <style>
+        :root {
+            --primary-color: #20B2AA;
+            --income-color: #28a745;
+            --expense-color: #dc3545;
+            --warning-color: #ffc107;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            padding-bottom: 80px;
+        }
+
+        .dashboard-card {
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary-color), #17a2b8);
+            color: white;
+            padding: 30px 20px;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .income-expense-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .income-box, .expense-box {
+            text-align: center;
+            flex: 1;
+        }
+
+        .income-box h6 {
+            color: var(--income-color);
+        }
+
+        .expense-box h6 {
+            color: var(--expense-color);
+        }
+
+        .transaction-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .transaction-item:active {
+            transform: scale(0.98);
+        }
+
+        .transaction-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-right: 15px;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-category {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .transaction-date {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .income-amount {
+            color: var(--income-color);
+        }
+
+        .expense-amount {
+            color: var(--expense-color);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 999;
+        }
+
+        .nav-item {
+            text-align: center;
+            flex: 1;
+            padding: 5px;
+            color: #6c757d;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .nav-item span {
+            font-size: 0.75rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin: 20px 0;
+        }
+
+        .category-list {
+            margin-top: 20px;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .category-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .health-score {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .health-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .health-good { background: var(--income-color); }
+        .health-warning { background: var(--warning-color); }
+        .health-danger { background: var(--expense-color); }
+
+        .modal-backdrop.show {
+            opacity: 0.5;
+        }
+
+        .quick-amount-btn {
+            margin: 5px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .swipe-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .swipe-actions button {
+            flex: 1;
+            padding: 5px;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 576px) {
+            .balance-amount {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Dashboard Page -->
+<div id="dashboard-page" class="page active">
+    <div class="container mt-3">
+        <h4 class="mb-3">Dashboard</h4>
+        
+        <!-- Balance Card -->
+        <div class="dashboard-card balance-card">
+            <div class="text-center">
+                <small>Saldo Total</small>
+                <div class="balance-amount" id="totalBalance">Rp 0</div>
+                <div class="income-expense-row">
+                    <div class="income-box">
+                        <h6>↑ Pemasukan</h6>
+                        <strong id="totalIncome">Rp 0</strong>
+                    </div>
+                    <div class="expense-box">
+                        <h6>↓ Pengeluaran</h6>
+                        <strong id="totalExpense">Rp 0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Score -->
+        <div class="dashboard-card card">
+            <div class="card-body health-score">
+                <div class="health-circle" id="healthCircle">85</div>
+                <h6 id="healthStatus">Kesehatan Keuangan Baik</h6>
+                <small class="text-muted">Tetap jaga pengeluaranmu!</small>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="dashboard-card card">
+            <div class="card-body">
+                <h6 class="card-title">Pengeluaran Bulanan</h6>
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="dashboard-card card">
+            <div class="card-body">
+                <h6 class="card-title">Transaksi Terbaru</h6>
+                <div id="recentTransactions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transactions Page -->
+<div id="transactions-page" class="page">
+    <div class="container mt-3">
+        <h4 class="mb-3">Semua Transaksi</h4>
+        <div id="allTransactions"></div>
+    </div>
+</div>
+
+<!-- Statistics Page -->
+<div id="statistics-page" class="page">
+    <div class="container mt-3">
+        <h4 class="mb-3">Statistik</h4>
+        <div class="dashboard-card card">
+            <div class="card-body">
+                <h6 class="card-title">Pengeluaran per Kategori</h6>
+                <div class="category-list" id="categoryBreakdown"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Page -->
+<div id="profile-page" class="page">
+    <div class="container mt-3">
+        <h4 class="mb-3">Profil</h4>
+        <div class="dashboard-card card">
+            <div class="card-body text-center">
+                <div style="width: 80px; height: 80px; background: var(--primary-color); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;">
+                    👤
+                </div>
+                <h5>Mahasiswa</h5>
+                <p class="text-muted">Pengguna Spended</p>
+            </div>
+        </div>
+        <div class="dashboard-card card">
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-danger" onclick="clearAllData()">🗑️ Hapus Semua Data</button>
+                    <button class="btn btn-outline-primary" onclick="exportData()">📊 Export Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FAB Button -->
+<button class="fab" onclick="showQuickAdd()">+</button>
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <a href="#" class="nav-item active" onclick="showPage('dashboard')">
+        <i>🏠</i>
+        <span>Beranda</span>
+    </a>
+    <a href="#" class="nav-item" onclick="showPage('transactions')">
+        <i>📋</i>
+        <span>Transaksi</span>
+    </a>
+    <a href="#" class="nav-item" onclick="showPage('statistics')">
+        <i>📊</i>
+        <span>Statistik</span>
+    </a>
+    <a href="#" class="nav-item" onclick="showPage('profile')">
+        <i>👤</i>
+        <span>Profil</span>
+    </a>
+</div>
+
+<!-- Quick Add Modal -->
+<div class="modal fade" id="quickAddModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Transaksi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="btn-group w-100 mb-3" role="group">
+                    <input type="radio" class="btn-check" name="transactionType" id="typeExpense" value="expense" checked>
+                    <label class="btn btn-outline-danger" for="typeExpense">Pengeluaran</label>
+                    
+                    <input type="radio" class="btn-check" name="transactionType" id="typeIncome" value="income">
+                    <label class="btn btn-outline-success" for="typeIncome">Pemasukan</label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Jumlah</label>
+                    <input type="number" class="form-control form-control-lg" id="transactionAmount" placeholder="0" autofocus>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-secondary quick-amount-btn" onclick="setAmount(10000)">10k</button>
+                        <button class="btn btn-sm btn-outline-secondary quick-amount-btn" onclick="setAmount(25000)">25k</button>
+                        <button class="btn btn-sm btn-outline-secondary quick-amount-btn" onclick="setAmount(50000)">50k</button>
+                        <button class="btn btn-sm btn-outline-secondary quick-amount-btn" onclick="setAmount(100000)">100k</button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Kategori</label>
+                    <select class="form-select" id="transactionCategory">
+                        <option value="Makanan">🍔 Makanan</option>
+                        <option value="Transportasi">🚗 Transportasi</option>
+                        <option value="Belanja">🛒 Belanja</option>
+                        <option value="Hiburan">🎮 Hiburan</option>
+                        <option value="Tagihan">💳 Tagihan</option>
+                        <option value="Kesehatan">💊 Kesehatan</option>
+                        <option value="Pendidikan">📚 Pendidikan</option>
+                        <option value="Lainnya">📦 Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Deskripsi (opsional)</label>
+                    <input type="text" class="form-control" id="transactionDescription" placeholder="Cth: Makan siang">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveTransaction()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Data Storage
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+let quickAddModalInstance;
+
+// Categories with colors
+const categoryColors = {
+    'Makanan': '#ff6384',
+    'Transportasi': '#36a2eb',
+    'Belanja': '#ffce56',
+    'Hiburan': '#4bc0c0',
+    'Tagihan': '#9966ff',
+    'Kesehatan': '#ff9f40',
+    'Pendidikan': '#c9cbcf',
+    'Lainnya': '#8e5ea2'
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    quickAddModalInstance = new bootstrap.Modal(document.getElementById('quickAddModal'));
+    updateDashboard();
+    registerServiceWorker();
+});
+
+// Service Worker Registration
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'spended-v1';
+            const urlsToCache = ['/'];
+            
+            self.addEventListener('install', event => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME)
+                        .then(cache => cache.addAll(urlsToCache))
+                );
+            });
+            
+            self.addEventListener('fetch', event => {
+                event.respondWith(
+                    caches.match(event.request)
+                        .then(response => response || fetch(event.request))
+                );
+            });
+        `;
+        
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        
+        navigator.serviceWorker.register(swUrl)
+            .then(() => console.log('Service Worker registered'))
+            .catch(err => console.log('Service Worker registration failed:', err));
+    }
+}
+
+// Manifest JSON
+const manifest = {
+    name: "Spended - Pencatat Keuangan",
+    short_name: "Spended",
+    start_url: "/",
+    display: "standalone",
+    background_color: "#ffffff",
+    theme_color: "#20B2AA",
+    icons: [{
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%2320B2AA'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white'%3E💰%3C/text%3E%3C/svg%3E",
+        sizes: "512x512",
+        type: "image/svg+xml"
+    }]
+};
+
+const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+const manifestURL = URL.createObjectURL(manifestBlob);
+document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+
+// Navigation
+function showPage(pageName) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    document.getElementById(pageName + '-page').classList.add('active');
+    event.target.closest('.nav-item').classList.add('active');
+    
+    if (pageName === 'transactions') {
+        displayAllTransactions();
+    } else if (pageName === 'statistics') {
+        displayStatistics();
+    } else if (pageName === 'dashboard') {
+        updateDashboard();
+    }
+}
+
+// Quick Add
+function showQuickAdd() {
+    document.getElementById('transactionAmount').value = '';
+    document.getElementById('transactionDescription').value = '';
+    quickAddModalInstance.show();
+}
+
+function setAmount(amount) {
+    document.getElementById('transactionAmount').value = amount;
+}
+
+function saveTransaction() {
+    const type = document.querySelector('input[name="transactionType"]:checked').value;
+    const amount = parseFloat(document.getElementById('transactionAmount').value);
+    const category = document.getElementById('transactionCategory').value;
+    const description = document.getElementById('transactionDescription').value;
+    
+    if (!amount || amount <= 0) {
+        alert('Masukkan jumlah yang valid!');
+        return;
+    }
+    
+    const transaction = {
+        id: Date.now(),
+        type: type,
+        amount: amount,
+        category: category,
+        description: description,
+        date: new Date().toISOString()
+    };
+    
+    transactions.unshift(transaction);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    
+    quickAddModalInstance.hide();
+    updateDashboard();
+    
+    // Show snackbar
+    showSnackbar('Transaksi berhasil disimpan!');
+}
+
+function showSnackbar(message) {
+    const snackbar = document.createElement('div');
+    snackbar.className = 'position-fixed bottom-0 start-50 translate-middle-x mb-5 bg-dark text-white px-4 py-2 rounded';
+    snackbar.style.zIndex = '9999';
+    snackbar.textContent = message;
+    document.body.appendChild(snackbar);
+    setTimeout(() => snackbar.remove(), 3000);
+}
+
+// Update Dashboard
+function updateDashboard() {
+    const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const balance = income - expense;
+    
+    document.getElementById('totalBalance').textContent = formatCurrency(balance);
+    document.getElementById('totalIncome').textContent = formatCurrency(income);
+    document.getElementById('totalExpense').textContent = formatCurrency(expense);
+    
+    updateHealthScore(income, expense);
+    displayRecentTransactions();
+    updateChart();
+}
+
+function updateHealthScore(income, expense) {
+    const score = income > 0 ? Math.round(((income - expense) / income) * 100) : 0;
+    const healthCircle = document.getElementById('healthCircle');
+    const healthStatus = document.getElementById('healthStatus');
+    
+    healthCircle.textContent = Math.max(0, Math.min(100, score));
+    
+    if (score >= 70) {
+        healthCircle.className = 'health-circle health-good';
+        healthStatus.textContent = 'Kesehatan Keuangan Baik';
+    } else if (score >= 40) {
+        healthCircle.className = 'health-circle health-warning';
+        healthStatus.textContent = 'Kesehatan Keuangan Cukup';
+    } else {
+        healthCircle.className = 'health-circle health-danger';
+        healthStatus.textContent = 'Kesehatan Keuangan Buruk';
+    }
+}
+
+function displayRecentTransactions() {
+    const container = document.getElementById('recentTransactions');
+    const recent = transactions.slice(0, 5);
+    
+    if (recent.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">Belum ada transaksi</p>';
+        return;
+    }
+    
+    container.innerHTML = recent.map(t => createTransactionHTML(t)).join('');
+}
+
+function displayAllTransactions() {
+    const container = document.getElementById('allTransactions');
+    
+    if (transactions.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">Belum ada transaksi</p>';
+        return;
+    }
+    
+    container.innerHTML = transactions.map(t => createTransactionHTML(t, true)).join('');
+}
+
+function createTransactionHTML(t, showActions = false) {
+    const icon = getCategoryIcon(t.category);
+    const amountClass = t.type === 'income' ? 'income-amount' : 'expense-amount';
+    const sign = t.type === 'income' ? '+' : '-';
+    const bgColor = t.type === 'income' ? '#d4edda' : '#f8d7da';
+    
+    return `
+        <div class="transaction-item">
+            <div class="d-flex align-items-center flex-grow-1">
+                <div class="transaction-icon" style="background-color: ${bgColor}">
+                    ${icon}
+                </div>
+                <div class="transaction-info">
+                    <div class="transaction-category">${t.category}</div>
+                    <div class="transaction-date">${formatDate(t.date)}${t.description ? ' • ' + t.description : ''}</div>
+                    ${showActions ? `
+                    <div class="swipe-actions">
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTransaction(${t.id})">Hapus</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="duplicateTransaction(${t.id})">Duplikat</button>
+                    </div>` : ''}
+                </div>
+            </div>
+            <div class="transaction-amount ${amountClass}">
+                ${sign}${formatCurrency(t.amount)}
+            </div>
+        </div>
+    `;
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        'Makanan': '🍔',
+        'Transportasi': '🚗',
+        'Belanja': '🛒',
+        'Hiburan': '🎮',
+        'Tagihan': '💳',
+        'Kesehatan': '💊',
+        'Pendidikan': '📚',
+        'Lainnya': '📦'
+    };
+    return icons[category] || '📦';
+}
+
+function deleteTransaction(id) {
+    if (confirm('Hapus transaksi ini?')) {
+        transactions = transactions.filter(t => t.id !== id);
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        displayAllTransactions();
+        updateDashboard();
+        showSnackbar('Transaksi dihapus');
+    }
+}
+
+function duplicateTransaction(id) {
+    const original = transactions.find(t => t.id === id);
+    if (original) {
+        const duplicate = { ...original, id: Date.now(), date: new Date().toISOString() };
+        transactions.unshift(duplicate);
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        displayAllTransactions();
+        updateDashboard();
+        showSnackbar('Transaksi diduplikasi');
+    }
+}
+
+// Chart
+let expenseChart;
+function updateChart() {
+    const ctx = document.getElementById('expenseChart');
+    const expenses = transactions.filter(t => t.type === 'expense');
+    
+    const categoryTotals = {};
+    expenses.forEach(t => {
+        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+    });
+    
+    const labels = Object.keys(categoryTotals);
+    const data = Object.values(categoryTotals);
+    const colors = labels.map(cat => categoryColors[cat] || '#999');
+    
+    if (expenseChart) {
+        expenseChart.destroy();
+    }
+    
+    expenseChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Statistics
+function displayStatistics() {
+    const container = document.getElementById('categoryBreakdown');
+    const expenses = transactions.filter(t => t.type === 'expense');
+    
+    const categoryTotals = {};
+    expenses.forEach(t => {
+        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+    });
+    
+    const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+    
+    if (total === 0) {
+        container.innerHTML = '<p class="text-muted text-center">Belum ada data pengeluaran</p>';
+        return;
+    }
+    
+    container.innerHTML = Object.entries(categoryTotals)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, amount]) => {
+            const percentage = ((amount / total) * 100).toFixed(1);
+            return `
+                <div class="category-item">
+                    <div class="d-flex align-items-center">
+                        <div class="category-color" style="background-color: ${categoryColors[cat]}"></div>
+                        <span>${cat}</span>
+                    </div>
+                    <div class="text-end">
+                        <strong>${formatCurrency(amount)}</strong>
+                        <div class="text-muted small">${percentage}%</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+}
+
+// Utility Functions
+function formatCurrency(amount) {
+    return 'Rp ' + amount.toLocaleString('id-ID');
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = { day: 'numeric', month: 'short', year: 'numeric' };
+    return date.toLocaleDateString('id-ID', options);
+}
+
+function clearAllData() {
+    if (confirm('Hapus semua data? Tindakan ini tidak dapat dibatalkan!')) {
+        localStorage.removeItem('transactions');
+        transactions = [];
+        updateDashboard();
+        showSnackbar('Semua data dihapus');
+    }
+}
+
+function exportData() {
+    const dataStr = JSON.stringify(transactions, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'spended-data-' + new Date().toISOString().split('T')[0] + '.json';
+    link.click();
+    showSnackbar('Data berhasil diexport');
+}
+</script>
+</body>
+</html>
